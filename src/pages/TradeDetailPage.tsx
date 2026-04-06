@@ -1,13 +1,13 @@
 import { useState, useEffect, useRef } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { ArrowLeft, Send, Check, X as XIcon, AlertTriangle } from 'lucide-react';
+import { ArrowLeft, Send, Check, X as XIcon } from 'lucide-react';
 import Button from '../components/ui/Button';
 import Badge from '../components/ui/Badge';
-import Input from '../components/ui/Input';
+
 import Spinner from '../components/ui/Spinner';
 import { Trade } from '../types/trade';
 import { ChatMessage } from '../types/chat';
-import { Card } from '../types/card';
+
 import { getTrade, updateTradeStatus } from '../services/tradeService';
 import { sendMessage, subscribeToMessages, setTypingIndicator, subscribeToTyping, markMessagesAsRead } from '../services/chatService';
 import { getCardById } from '../services/cardService';

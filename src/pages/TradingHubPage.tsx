@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { ArrowLeftRight, Plus, Users, Zap } from 'lucide-react';
-import Button from '../components/ui/Button';
+import { ArrowLeftRight, Users, Zap } from 'lucide-react';
 import Badge from '../components/ui/Badge';
 import Spinner from '../components/ui/Spinner';
 import EmptyState from '../components/ui/EmptyState';

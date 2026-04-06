@@ -1,5 +1,5 @@
 import {
-  ref, push, set, onValue, query as rtdbQuery, orderByChild, limitToLast, off, serverTimestamp, get,
+  ref, push, set, onValue, query as rtdbQuery, orderByChild, limitToLast, off, get,
 } from 'firebase/database';
 import { rtdb } from '../config/firebase';
 import { ChatMessage, ChatRoom } from '../types/chat';

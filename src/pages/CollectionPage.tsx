@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { FolderOpen, Plus, Minus, ArrowLeftRight, Download, Upload, Trash2 } from 'lucide-react';
+import { FolderOpen, Plus, Minus, ArrowLeftRight, Download } from 'lucide-react';
 import Button from '../components/ui/Button';
 import Input from '../components/ui/Input';
 import Badge from '../components/ui/Badge';
