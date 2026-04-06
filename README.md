@@ -1,50 +1,36 @@
-# React + TypeScript + Vite
+# CFV Tracker MY
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+Cardfight!! Vanguard Card Tracker for Malaysian Players.
 
-Currently, two official plugins are available:
+Track your cards, find trades, and connect with the community.
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react/README.md) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+## Features
 
-## Expanding the ESLint configuration
+- **Card Database** - Browse CFV Standard cards with Japanese + English text and errata history
+- **Collection Tracker** - Track quantities, mark cards for trade, export to JSON
+- **Wishlist** - Prioritize cards you want (high/medium/low)
+- **Trading Hub** - Auto-matching algorithm finds trade partners based on your collection and wishlist
+- **Real-time Chat** - Message trade partners directly in the app
+- **User Profiles** - Reputation system, trade history, custom bio
+- **Admin Panel** - Card management, bulk import, user roles, dispute resolution
+- **Dark Mode** - System preference detection + manual toggle
+- **Mobile Friendly** - Responsive design works on all screen sizes
 
-If you are developing a production application, we recommend updating the configuration to enable type aware lint rules:
+## Tech Stack
 
-- Configure the top-level `parserOptions` property like this:
+- React 18 + TypeScript + Vite
+- Tailwind CSS
+- Firebase (Auth, Firestore, Realtime Database)
+- GitHub Pages
 
-```js
-export default tseslint.config({
-  languageOptions: {
-    // other options...
-    parserOptions: {
-      project: ['./tsconfig.node.json', './tsconfig.app.json'],
-      tsconfigRootDir: import.meta.dirname,
-    },
-  },
-})
-```
+## Setup
 
-- Replace `tseslint.configs.recommended` to `tseslint.configs.recommendedTypeChecked` or `tseslint.configs.strictTypeChecked`
-- Optionally add `...tseslint.configs.stylisticTypeChecked`
-- Install [eslint-plugin-react](https://github.com/jsx-eslint/eslint-plugin-react) and update the config:
+1. Clone the repo
+2. Copy `.env.example` to `.env` and fill in your Firebase config
+3. `npm install`
+4. `npm run dev`
 
-```js
-// eslint.config.js
-import react from 'eslint-plugin-react'
+## Deployment
 
-export default tseslint.config({
-  // Set the react version
-  settings: { react: { version: '18.3' } },
-  plugins: {
-    // Add the react plugin
-    react,
-  },
-  rules: {
-    // other rules...
-    // Enable its recommended rules
-    ...react.configs.recommended.rules,
-    ...react.configs['jsx-runtime'].rules,
-  },
-})
-```
+Pushes to `main` automatically deploy to GitHub Pages via GitHub Actions.
+Firebase config is injected from repository secrets at build time.
