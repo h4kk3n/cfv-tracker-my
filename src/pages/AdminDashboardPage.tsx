@@ -1,20 +1,18 @@
 import { useState, useEffect } from 'react';
-import { Shield, Users, CreditCard, AlertTriangle, Upload } from 'lucide-react';
+import { Shield, CreditCard, Upload } from 'lucide-react';
 import Button from '../components/ui/Button';
 import Input from '../components/ui/Input';
 import Select from '../components/ui/Select';
-import Badge from '../components/ui/Badge';
+
 import Spinner from '../components/ui/Spinner';
 import Modal from '../components/ui/Modal';
 import { UserProfile, UserRole } from '../types/user';
-import { Card } from '../types/card';
 import { Trade } from '../types/trade';
 import { getAllUsers, updateUserRole } from '../services/userService';
 import { addCard, importCards } from '../services/cardService';
 import { getReportedTrades, updateTradeStatus } from '../services/tradeService';
 import { useNotification } from '../contexts/NotificationContext';
-import { NATIONS, GRADES, TRIGGERS, RARITIES } from '../types/card';
-import { TRADE_STATUS_COLORS, TRADE_STATUS_LABELS } from '../utils/constants';
+import { NATIONS, RARITIES } from '../types/card';
 
 export default function AdminDashboardPage() {
   const { addToast } = useNotification();
