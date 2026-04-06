@@ -9,7 +9,7 @@ import Modal from '../components/ui/Modal';
 import { UserProfile, UserRole } from '../types/user';
 import { Trade } from '../types/trade';
 import { getAllUsers, updateUserRole } from '../services/userService';
-import { addCard, importCards } from '../services/cardService';
+import { addCard, importCards, removeDuplicateCards, deleteAllCards } from '../services/cardService';
 import { getReportedTrades, updateTradeStatus } from '../services/tradeService';
 import { useNotification } from '../contexts/NotificationContext';
 import { NATIONS, RARITIES } from '../types/card';
@@ -117,9 +117,26 @@ export default function AdminDashboardPage() {
 
       {tab === 'cards' && (
         <div className="space-y-4">
-          <div className="flex gap-2">
+          <div className="flex flex-wrap gap-2">
             <Button onClick={() => setShowAddCard(true)}><CreditCard size={16} className="mr-1" /> Add Card</Button>
             <Button variant="secondary" onClick={() => setShowImport(true)}><Upload size={16} className="mr-1" /> Import JSON</Button>
+            <Button variant="secondary" onClick={async () => {
+              if (!confirm('This will scan all cards and remove duplicates (keeping the first occurrence). Continue?')) return;
+              addToast('info', 'Scanning for duplicates...');
+              try {
+                const removed = await removeDuplicateCards();
+                addToast('success', removed > 0 ? `Removed ${removed} duplicate cards` : 'No duplicates found');
+              } catch { addToast('error', 'Failed to remove duplicates'); }
+            }}>Remove Duplicates</Button>
+            <Button variant="danger" onClick={async () => {
+              if (!confirm('DELETE ALL CARDS from the database? This cannot be undone!')) return;
+              if (!confirm('Are you really sure? This will remove every card.')) return;
+              addToast('info', 'Deleting all cards...');
+              try {
+                const removed = await deleteAllCards();
+                addToast('success', `Deleted ${removed} cards`);
+              } catch { addToast('error', 'Failed to delete cards'); }
+            }}>Delete All Cards</Button>
           </div>
         </div>
       )}

@@ -81,6 +81,38 @@ export async function deleteCard(id: string): Promise<void> {
   await deleteDoc(doc(db, CARDS_COLLECTION, id));
 }
 
+export async function removeDuplicateCards(): Promise<number> {
+  const snapshot = await getDocs(collection(db, CARDS_COLLECTION));
+  const seen = new Map<string, string>(); // nameEN -> first doc id
+  const toDelete: string[] = [];
+
+  for (const d of snapshot.docs) {
+    const name = ((d.data().nameEN as string) || '').toLowerCase().trim();
+    if (!name) continue;
+    if (seen.has(name)) {
+      toDelete.push(d.id); // duplicate — mark for deletion
+    } else {
+      seen.set(name, d.id);
+    }
+  }
+
+  for (const id of toDelete) {
+    await deleteDoc(doc(db, CARDS_COLLECTION, id));
+  }
+
+  return toDelete.length;
+}
+
+export async function deleteAllCards(): Promise<number> {
+  const snapshot = await getDocs(collection(db, CARDS_COLLECTION));
+  let count = 0;
+  for (const d of snapshot.docs) {
+    await deleteDoc(doc(db, CARDS_COLLECTION, d.id));
+    count++;
+  }
+  return count;
+}
+
 export async function importCards(cards: Omit<Card, 'id' | 'searchTokens' | 'updatedAt'>[]): Promise<number> {
   // Fetch all existing card names to check for duplicates
   const snapshot = await getDocs(collection(db, CARDS_COLLECTION));
