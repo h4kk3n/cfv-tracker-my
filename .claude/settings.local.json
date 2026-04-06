@@ -1,0 +1,26 @@
+{
+  "permissions": {
+    "allow": [
+      "WebSearch",
+      "WebFetch(domain:card-fight-vanguard-api.uc.r.appspot.com)",
+      "WebFetch(domain:pockettrade.app)",
+      "WebFetch(domain:github.com)",
+      "WebFetch(domain:www.npmjs.com)",
+      "WebFetch(domain:play.google.com)",
+      "WebFetch(domain:www.icollecteverything.com)",
+      "WebFetch(domain:apps.apple.com)",
+      "WebFetch(domain:poketrade.party)",
+      "WebFetch(domain:www.poketrade.party)",
+      "WebFetch(domain:vanguardcard.io)",
+      "Bash(npm create:*)",
+      "Bash(npm -v)",
+      "Bash(npx:*)",
+      "Bash(cp:*)",
+      "Bash(npm install:*)",
+      "Bash(git --version)",
+      "Bash(gh --version)",
+      "Bash(git init:*)",
+      "Bash(git add:*)"
+    ]
+  }
+}

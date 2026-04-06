@@ -1,0 +1,68 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function getUserRole() {
+      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role;
+    }
+
+    function isAdmin() {
+      return isSignedIn() && getUserRole() == 'admin';
+    }
+
+    function isModerator() {
+      return isSignedIn() && (getUserRole() == 'moderator' || getUserRole() == 'admin');
+    }
+
+    // Users collection
+    match /users/{userId} {
+      allow read: if isSignedIn();
+      allow create: if isSignedIn() && request.auth.uid == userId
+                    && request.resource.data.role == 'user';
+      allow update: if isSignedIn() &&
+        ((request.auth.uid == userId && !('role' in request.resource.data.diff(resource.data).affectedKeys()))
+        || isAdmin());
+    }
+
+    // Cards collection - public read, admin/mod write
+    match /cards/{cardId} {
+      allow read: if true;
+      allow write: if isModerator();
+    }
+
+    // Collections - anyone signed in can read (for trade matching), only owner writes
+    match /collections/{userId}/items/{itemId} {
+      allow read: if isSignedIn();
+      allow write: if isSignedIn() && request.auth.uid == userId;
+    }
+
+    // Wishlists - same as collections
+    match /wishlists/{userId}/items/{itemId} {
+      allow read: if isSignedIn();
+      allow write: if isSignedIn() && request.auth.uid == userId;
+    }
+
+    // Trades - participants + mods can read/update
+    match /trades/{tradeId} {
+      allow read: if isSignedIn() &&
+        (resource.data.initiatorId == request.auth.uid ||
+         resource.data.receiverId == request.auth.uid ||
+         isModerator());
+      allow create: if isSignedIn();
+      allow update: if isSignedIn() &&
+        (resource.data.initiatorId == request.auth.uid ||
+         resource.data.receiverId == request.auth.uid ||
+         isModerator());
+      allow delete: if isAdmin();
+    }
+
+    // Notifications - private to owner
+    match /notifications/{userId}/items/{notifId} {
+      allow read, write: if isSignedIn() && request.auth.uid == userId;
+    }
+  }
+}
