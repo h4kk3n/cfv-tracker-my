@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Shield, CreditCard, Upload } from 'lucide-react';
 import Button from '../components/ui/Button';
 import Input from '../components/ui/Input';
@@ -22,13 +22,15 @@ export default function AdminDashboardPage() {
   const [loading, setLoading] = useState(true);
   const [showAddCard, setShowAddCard] = useState(false);
   const [showImport, setShowImport] = useState(false);
-  const [importJson, setImportJson] = useState('');
+  const [importing, setImporting] = useState(false);
+  const [importProgress, setImportProgress] = useState('');
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const [cardForm, setCardForm] = useState({
     cardNumber: '', nameEN: '', nameJP: '', nameRomaji: '', nation: '', clan: '', race: '',
     grade: 0, power: 0, shield: 0, critical: 1, trigger: '', skillIcon: '',
     format: ['Standard'], setId: '', setName: '', rarity: 'C',
     effectEN: '', effectJP: '', flavorTextEN: '', flavorTextJP: '', imageURL: '',
-    errata: [] as any[],
+    errata: [] as unknown[],
   });
 
   useEffect(() => {
@@ -45,7 +47,7 @@ export default function AdminDashboardPage() {
 
   const handleAddCard = async () => {
     try {
-      await addCard({ ...cardForm, shield: cardForm.shield || null } as any);
+      await addCard({ ...cardForm, shield: cardForm.shield || null } as Parameters<typeof addCard>[0]);
       addToast('success', 'Card added successfully');
       setShowAddCard(false);
       setCardForm({ cardNumber: '', nameEN: '', nameJP: '', nameRomaji: '', nation: '', clan: '', race: '', grade: 0, power: 0, shield: 0, critical: 1, trigger: '', skillIcon: '', format: ['Standard'], setId: '', setName: '', rarity: 'C', effectEN: '', effectJP: '', flavorTextEN: '', flavorTextJP: '', imageURL: '', errata: [] });
@@ -54,16 +56,30 @@ export default function AdminDashboardPage() {
     }
   };
 
-  const handleImport = async () => {
+  const handleFileImport = async (file: File) => {
+    setImporting(true);
+    setImportProgress('Reading file...');
     try {
-      const cards = JSON.parse(importJson);
-      const count = await importCards(cards);
-      addToast('success', `Imported ${count} cards`);
+      const text = await file.text();
+      const cards = JSON.parse(text);
+      if (!Array.isArray(cards)) throw new Error('JSON must be an array');
+
+      const BATCH_SIZE = 20;
+      let imported = 0;
+      for (let i = 0; i < cards.length; i += BATCH_SIZE) {
+        const batch = cards.slice(i, i + BATCH_SIZE);
+        setImportProgress(`Importing ${imported}/${cards.length} cards...`);
+        await importCards(batch);
+        imported += batch.length;
+      }
+
+      setImportProgress('');
+      addToast('success', `Imported ${imported} cards successfully!`);
       setShowImport(false);
-      setImportJson('');
-    } catch {
-      addToast('error', 'Invalid JSON or import failed');
+    } catch (err) {
+      addToast('error', `Import failed: ${err instanceof Error ? err.message : 'Unknown error'}`);
     }
+    setImporting(false);
   };
 
   const handleRoleChange = async (uid: string, role: UserRole) => {
@@ -186,11 +202,30 @@ export default function AdminDashboardPage() {
       </Modal>
 
       {/* Import Modal */}
-      <Modal isOpen={showImport} onClose={() => setShowImport(false)} title="Import Cards (JSON)">
+      <Modal isOpen={showImport} onClose={() => !importing && setShowImport(false)} title="Import Cards (JSON)">
         <div className="space-y-4">
-          <p className="text-sm text-gray-500">Paste a JSON array of card objects.</p>
-          <textarea className="input-field font-mono text-xs" rows={10} value={importJson} onChange={(e) => setImportJson(e.target.value)} placeholder='[{"cardNumber":"D-BT01/001","nameEN":"...","nameJP":"..."}]' />
-          <Button className="w-full" onClick={handleImport}>Import</Button>
+          {importing ? (
+            <div className="text-center py-8">
+              <Spinner size="lg" className="mb-4" />
+              <p className="text-sm font-medium">{importProgress}</p>
+              <p className="text-xs text-gray-500 mt-1">Do not close this window</p>
+            </div>
+          ) : (
+            <>
+              <p className="text-sm text-gray-500">Select a JSON file containing an array of card objects.</p>
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept=".json"
+                className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-medium file:bg-primary-50 file:text-primary-700 hover:file:bg-primary-100 dark:file:bg-primary-900 dark:file:text-primary-300"
+                onChange={(e) => {
+                  const file = e.target.files?.[0];
+                  if (file) handleFileImport(file);
+                }}
+              />
+              <p className="text-xs text-gray-400">Supports large files. Cards are imported in batches of 20.</p>
+            </>
+          )}
         </div>
       </Modal>
     </div>
