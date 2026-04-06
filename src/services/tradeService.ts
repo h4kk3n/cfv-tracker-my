@@ -1,7 +1,7 @@
 import {
   collection, doc, getDoc, getDocs, addDoc, updateDoc, query, where, orderBy, serverTimestamp,
 } from 'firebase/firestore';
-import { ref, set, serverTimestamp as rtdbTimestamp } from 'firebase/database';
+import { ref, set } from 'firebase/database';
 import { db, rtdb } from '../config/firebase';
 import { Trade, TradeStatus, TradeCard } from '../types/trade';
 
@@ -64,11 +64,11 @@ export async function getUserTrades(userId: string): Promise<Trade[]> {
 }
 
 export async function updateTradeStatus(tradeId: string, status: TradeStatus): Promise<void> {
-  const update: Record<string, unknown> = { status, updatedAt: serverTimestamp() };
   if (status === 'completed') {
-    update.completedAt = serverTimestamp();
+    await updateDoc(doc(db, 'trades', tradeId), { status, updatedAt: serverTimestamp(), completedAt: serverTimestamp() });
+  } else {
+    await updateDoc(doc(db, 'trades', tradeId), { status, updatedAt: serverTimestamp() });
   }
-  await updateDoc(doc(db, 'trades', tradeId), update);
 }
 
 export async function reportTrade(tradeId: string, reportedBy: string, reason: string): Promise<void> {

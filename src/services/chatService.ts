@@ -26,7 +26,7 @@ export function subscribeToMessages(
   const messagesRef = ref(rtdb, `chats/${chatId}/messages`);
   const q = rtdbQuery(messagesRef, orderByChild('timestamp'), limitToLast(100));
 
-  const handler = onValue(q, (snapshot) => {
+  onValue(q, (snapshot) => {
     const messages: ChatMessage[] = [];
     snapshot.forEach((child) => {
       messages.push({ id: child.key!, ...child.val() });
@@ -48,7 +48,7 @@ export function subscribeToTyping(
 ): () => void {
   const typingRef = ref(rtdb, `chats/${chatId}/typing`);
 
-  const handler = onValue(typingRef, (snapshot) => {
+  onValue(typingRef, (snapshot) => {
     const typing = snapshot.val() || {};
     const otherTyping = Object.entries(typing).some(
       ([uid, val]) => uid !== userId && val === true
