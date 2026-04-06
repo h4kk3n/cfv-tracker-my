@@ -82,9 +82,20 @@ export async function deleteCard(id: string): Promise<void> {
 }
 
 export async function importCards(cards: Omit<Card, 'id' | 'searchTokens' | 'updatedAt'>[]): Promise<number> {
+  // Fetch all existing card names to check for duplicates
+  const snapshot = await getDocs(collection(db, CARDS_COLLECTION));
+  const existingNames = new Set(
+    snapshot.docs.map((d) => (d.data().nameEN as string || '').toLowerCase())
+  );
+
   let count = 0;
   for (const card of cards) {
+    const nameLower = (card.nameEN || '').toLowerCase();
+    if (nameLower && existingNames.has(nameLower)) {
+      continue; // Skip duplicate
+    }
     await addCard(card);
+    existingNames.add(nameLower);
     count++;
   }
   return count;
