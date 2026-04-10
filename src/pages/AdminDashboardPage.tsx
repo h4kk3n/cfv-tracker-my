@@ -9,10 +9,10 @@ import Modal from '../components/ui/Modal';
 import { UserProfile, UserRole } from '../types/user';
 import { Trade } from '../types/trade';
 import { getAllUsers, updateUserRole } from '../services/userService';
-import { addCard, importCards, removeDuplicateCards, deleteAllCards } from '../services/cardService';
+import { addCard, getExistingCardNames, importCardsBatch, removeDuplicateCards, deleteAllCards } from '../services/cardService';
 import { getReportedTrades, updateTradeStatus } from '../services/tradeService';
 import { useNotification } from '../contexts/NotificationContext';
-import { NATIONS, RARITIES } from '../types/card';
+import { NATIONS, RARITIES, CARD_TYPES } from '../types/card';
 
 export default function AdminDashboardPage() {
   const { addToast } = useNotification();
@@ -28,7 +28,8 @@ export default function AdminDashboardPage() {
   const [cardForm, setCardForm] = useState({
     cardNumber: '', nameEN: '', nameJP: '', nameRomaji: '', nation: '', clan: '', race: '',
     grade: 0, power: 0, shield: 0, critical: 1, trigger: '', skillIcon: '',
-    format: ['Standard'], setId: '', setName: '', rarity: 'C',
+    cardType: 'Normal Unit', format: ['Standard'], setId: '', setName: '', rarity: 'C',
+    illustrator: '',
     effectEN: '', effectJP: '', flavorTextEN: '', flavorTextJP: '', imageURL: '',
     errata: [] as unknown[],
   });
@@ -50,7 +51,7 @@ export default function AdminDashboardPage() {
       await addCard({ ...cardForm, shield: cardForm.shield || null } as Parameters<typeof addCard>[0]);
       addToast('success', 'Card added successfully');
       setShowAddCard(false);
-      setCardForm({ cardNumber: '', nameEN: '', nameJP: '', nameRomaji: '', nation: '', clan: '', race: '', grade: 0, power: 0, shield: 0, critical: 1, trigger: '', skillIcon: '', format: ['Standard'], setId: '', setName: '', rarity: 'C', effectEN: '', effectJP: '', flavorTextEN: '', flavorTextJP: '', imageURL: '', errata: [] });
+      setCardForm({ cardNumber: '', nameEN: '', nameJP: '', nameRomaji: '', nation: '', clan: '', race: '', grade: 0, power: 0, shield: 0, critical: 1, trigger: '', skillIcon: '', cardType: 'Normal Unit', format: ['Standard'], setId: '', setName: '', rarity: 'C', illustrator: '', effectEN: '', effectJP: '', flavorTextEN: '', flavorTextJP: '', imageURL: '', errata: [] });
     } catch {
       addToast('error', 'Failed to add card');
     }
@@ -64,17 +65,22 @@ export default function AdminDashboardPage() {
       const cards = JSON.parse(text);
       if (!Array.isArray(cards)) throw new Error('JSON must be an array');
 
-      const BATCH_SIZE = 20;
+      setImportProgress('Checking existing cards...');
+      const existingNames = await getExistingCardNames();
+
+      const BATCH_SIZE = 400; // Firestore batch limit is 500, leave room for safety
       let imported = 0;
+      let skipped = 0;
       for (let i = 0; i < cards.length; i += BATCH_SIZE) {
         const batch = cards.slice(i, i + BATCH_SIZE);
-        setImportProgress(`Importing ${imported}/${cards.length} cards...`);
-        await importCards(batch);
-        imported += batch.length;
+        setImportProgress(`Importing ${imported}/${cards.length} cards... (${skipped} duplicates skipped)`);
+        const added = await importCardsBatch(batch, existingNames);
+        imported += added;
+        skipped += batch.length - added;
       }
 
       setImportProgress('');
-      addToast('success', `Imported ${imported} cards successfully!`);
+      addToast('success', `Imported ${imported} cards (${skipped} duplicates skipped)`);
       setShowImport(false);
     } catch (err) {
       addToast('error', `Import failed: ${err instanceof Error ? err.message : 'Unknown error'}`);
@@ -201,6 +207,9 @@ export default function AdminDashboardPage() {
           <Input label="Shield" type="number" value={cardForm.shield} onChange={(e) => setCardForm({ ...cardForm, shield: Number(e.target.value) })} />
           <Select label="Rarity" value={cardForm.rarity} onChange={(e) => setCardForm({ ...cardForm, rarity: e.target.value })}
             options={RARITIES.map((r) => ({ value: r, label: r }))} />
+          <Select label="Card Type" value={cardForm.cardType} onChange={(e) => setCardForm({ ...cardForm, cardType: e.target.value })}
+            options={CARD_TYPES.map((t) => ({ value: t, label: t }))} />
+          <Input label="Illustrator" value={cardForm.illustrator} onChange={(e) => setCardForm({ ...cardForm, illustrator: e.target.value })} />
           <Input label="Set ID" value={cardForm.setId} onChange={(e) => setCardForm({ ...cardForm, setId: e.target.value })} />
           <Input label="Set Name" value={cardForm.setName} onChange={(e) => setCardForm({ ...cardForm, setName: e.target.value })} />
           <Input label="Image URL" value={cardForm.imageURL} onChange={(e) => setCardForm({ ...cardForm, imageURL: e.target.value })} className="col-span-2" />

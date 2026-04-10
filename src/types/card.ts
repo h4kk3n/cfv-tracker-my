@@ -20,10 +20,12 @@ export interface Card {
   critical: number;
   trigger: string | null;
   skillIcon: string | null;
+  cardType: string;
   format: string[];
   setId: string;
   setName: string;
   rarity: string;
+  illustrator: string;
   effectEN: string;
   effectJP: string;
   flavorTextEN: string;
@@ -42,10 +44,12 @@ export interface CardFilters {
   rarity: string;
   setId: string;
   format: string;
+  cardType: string;
 }
 
 export const NATIONS = [
-  'Dragon Empire', 'Dark States', 'Brandt Gate', 'Keter Sanctuary', 'Stoicheia', 'Lyrical Monasterio'
+  'Dragon Empire', 'Dark States', 'Brandt Gate', 'Keter Sanctuary', 'Stoicheia', 'Lyrical Monasterio',
+  'Touken Ranbu', 'SHAMAN KING', 'Record of Ragnarok', 'Buddyfight', 'BanG Dream!', 'CoroCoro', 'VSPO',
 ];
 
 export const GRADES = [0, 1, 2, 3, 4, 5];
@@ -53,3 +57,5 @@ export const GRADES = [0, 1, 2, 3, 4, 5];
 export const TRIGGERS = ['Critical', 'Draw', 'Front', 'Heal', 'Over'];
 
 export const RARITIES = ['C', 'R', 'RR', 'RRR', 'VR', 'SP', 'SSR', 'ORR', 'SCR'];
+
+export const CARD_TYPES = ['Normal Unit', 'Trigger Unit', 'Normal Order', 'Blitz Order', 'Set Order'];

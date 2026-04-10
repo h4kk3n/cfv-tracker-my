@@ -17,6 +17,7 @@ export function filterCards(cards: Card[], filters: CardFilters): Card[] {
     if (filters.rarity && card.rarity !== filters.rarity) return false;
     if (filters.setId && card.setId !== filters.setId) return false;
     if (filters.format && !card.format.includes(filters.format)) return false;
+    if (filters.cardType && card.cardType !== filters.cardType) return false;
     return true;
   });
 }

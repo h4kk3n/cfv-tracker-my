@@ -96,7 +96,8 @@ export default function CardDetailPage() {
             </div>
             <p className="text-xl text-gray-600 dark:text-gray-400 mt-1">{card.nameJP}</p>
             {card.nameRomaji && <p className="text-sm text-gray-500 italic">{card.nameRomaji}</p>}
-            <p className="text-sm text-gray-400 mt-1">{card.cardNumber} - {card.setName}</p>
+            {card.cardType && <p className="text-sm text-gray-500 mt-1">{card.cardType}</p>}
+            <p className="text-sm text-gray-400 mt-1">{card.cardNumber}{card.setName ? ` — ${card.setName}` : ''}</p>
           </div>
 
           {/* Stats */}
@@ -109,6 +110,7 @@ export default function CardDetailPage() {
             <div><span className="text-xs text-gray-500 block">Race</span><span className="font-semibold">{card.race || '-'}</span></div>
             <div><span className="text-xs text-gray-500 block">Rarity</span><Badge>{card.rarity}</Badge></div>
             {card.trigger && <div><span className="text-xs text-gray-500 block">Trigger</span><Badge variant="warning">{card.trigger}</Badge></div>}
+            {card.illustrator && <div><span className="text-xs text-gray-500 block">Illustrator</span><span className="font-semibold text-sm">{card.illustrator}</span></div>}
           </div>
 
           {/* Effect - English */}

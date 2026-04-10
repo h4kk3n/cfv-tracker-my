@@ -1,7 +1,7 @@
 import {
   collection, doc, getDoc, getDocs, addDoc, updateDoc, deleteDoc,
   query, where, orderBy, limit, startAfter, serverTimestamp,
-  DocumentSnapshot,
+  writeBatch, DocumentSnapshot,
 } from 'firebase/firestore';
 import { db } from '../config/firebase';
 import { Card } from '../types/card';
@@ -96,8 +96,14 @@ export async function removeDuplicateCards(): Promise<number> {
     }
   }
 
-  for (const id of toDelete) {
-    await deleteDoc(doc(db, CARDS_COLLECTION, id));
+  // Delete in batches of 500
+  for (let i = 0; i < toDelete.length; i += 500) {
+    const batch = writeBatch(db);
+    const chunk = toDelete.slice(i, i + 500);
+    for (const id of chunk) {
+      batch.delete(doc(db, CARDS_COLLECTION, id));
+    }
+    await batch.commit();
   }
 
   return toDelete.length;
@@ -105,30 +111,48 @@ export async function removeDuplicateCards(): Promise<number> {
 
 export async function deleteAllCards(): Promise<number> {
   const snapshot = await getDocs(collection(db, CARDS_COLLECTION));
+  const docs = snapshot.docs;
   let count = 0;
-  for (const d of snapshot.docs) {
-    await deleteDoc(doc(db, CARDS_COLLECTION, d.id));
-    count++;
+
+  // Delete in batches of 500 (Firestore max per batch)
+  for (let i = 0; i < docs.length; i += 500) {
+    const batch = writeBatch(db);
+    const chunk = docs.slice(i, i + 500);
+    for (const d of chunk) {
+      batch.delete(doc(db, CARDS_COLLECTION, d.id));
+    }
+    await batch.commit();
+    count += chunk.length;
   }
+
   return count;
 }
 
-export async function importCards(cards: Omit<Card, 'id' | 'searchTokens' | 'updatedAt'>[]): Promise<number> {
-  // Fetch all existing card names to check for duplicates
+export async function getExistingCardNames(): Promise<Set<string>> {
   const snapshot = await getDocs(collection(db, CARDS_COLLECTION));
-  const existingNames = new Set(
+  return new Set(
     snapshot.docs.map((d) => (d.data().nameEN as string || '').toLowerCase())
   );
+}
 
-  let count = 0;
-  for (const card of cards) {
+export async function importCardsBatch(
+  cards: Omit<Card, 'id' | 'searchTokens' | 'updatedAt'>[],
+  existingNames: Set<string>,
+): Promise<number> {
+  const toAdd = cards.filter(card => {
     const nameLower = (card.nameEN || '').toLowerCase();
-    if (nameLower && existingNames.has(nameLower)) {
-      continue; // Skip duplicate
-    }
-    await addCard(card);
-    existingNames.add(nameLower);
-    count++;
+    return nameLower && !existingNames.has(nameLower);
+  });
+
+  if (toAdd.length === 0) return 0;
+
+  const batch = writeBatch(db);
+  for (const card of toAdd) {
+    const searchTokens = generateSearchTokens(card);
+    const docRef = doc(collection(db, CARDS_COLLECTION));
+    batch.set(docRef, { ...card, searchTokens, updatedAt: serverTimestamp() });
+    existingNames.add((card.nameEN || '').toLowerCase());
   }
-  return count;
+  await batch.commit();
+  return toAdd.length;
 }

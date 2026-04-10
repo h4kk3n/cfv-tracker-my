@@ -20,7 +20,7 @@ export default function CardBrowserPage() {
   const [sortBy, setSortBy] = useState('name');
   const [showFilters, setShowFilters] = useState(false);
   const [filters, setFilters] = useState<CardFilters>({
-    search: '', nation: '', grade: null, trigger: '', rarity: '', setId: '', format: 'Standard',
+    search: '', nation: '', grade: null, trigger: '', rarity: '', setId: '', format: 'Standard', cardType: '',
   });
 
   useEffect(() => {
