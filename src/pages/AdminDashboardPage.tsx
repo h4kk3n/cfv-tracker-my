@@ -249,7 +249,7 @@ export default function AdminDashboardPage() {
                   if (file) handleFileImport(file);
                 }}
               />
-              <p className="text-xs text-gray-400">Supports large files. Cards are imported in batches of 20.</p>
+              <p className="text-xs text-gray-400">Supports large files. Cards are imported in batches of 400.</p>
             </>
           )}
         </div>

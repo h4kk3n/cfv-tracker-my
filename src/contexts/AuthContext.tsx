@@ -3,6 +3,7 @@ import { User, onAuthStateChanged } from 'firebase/auth';
 import { doc, getDoc, setDoc, serverTimestamp } from 'firebase/firestore';
 import { auth, db } from '../config/firebase';
 import { UserProfile } from '../types/user';
+import { normalizeTimestamp } from '../utils/formatters';
 
 interface AuthContextType {
   user: User | null;
@@ -27,7 +28,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const docRef = doc(db, 'users', uid);
     const docSnap = await getDoc(docRef);
     if (docSnap.exists()) {
-      setUserProfile({ uid, ...docSnap.data() } as UserProfile);
+      const data = docSnap.data();
+      setUserProfile({
+        ...data,
+        uid,
+        createdAt: normalizeTimestamp(data.createdAt),
+        lastActive: normalizeTimestamp(data.lastActive),
+      } as UserProfile);
       await setDoc(docRef, { lastActive: serverTimestamp() }, { merge: true });
     }
   };

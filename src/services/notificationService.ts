@@ -3,6 +3,7 @@ import {
 } from 'firebase/firestore';
 import { db } from '../config/firebase';
 import { Notification } from '../types/chat';
+import { normalizeTimestamp } from '../utils/formatters';
 
 export async function getNotifications(userId: string): Promise<Notification[]> {
   const q = query(
@@ -10,7 +11,11 @@ export async function getNotifications(userId: string): Promise<Notification[]> 
     orderBy('createdAt', 'desc')
   );
   const snapshot = await getDocs(q);
-  return snapshot.docs.map((d) => ({ id: d.id, ...d.data() }) as Notification);
+  return snapshot.docs.map((d) => ({
+    ...d.data(),
+    id: d.id,
+    createdAt: normalizeTimestamp(d.data().createdAt),
+  }) as Notification);
 }
 
 export async function createNotification(

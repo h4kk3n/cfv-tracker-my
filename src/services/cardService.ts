@@ -5,8 +5,17 @@ import {
 } from 'firebase/firestore';
 import { db } from '../config/firebase';
 import { Card } from '../types/card';
+import { normalizeTimestamp } from '../utils/formatters';
 
 const CARDS_COLLECTION = 'cards';
+
+function normalizeCard(id: string, data: Record<string, unknown>): Card {
+  return {
+    ...data,
+    id,
+    updatedAt: normalizeTimestamp(data.updatedAt),
+  } as Card;
+}
 
 function generateSearchTokens(card: Partial<Card>): string[] {
   const tokens: string[] = [];
@@ -28,26 +37,31 @@ export async function getCards(pageSize: number = 24, lastDoc?: DocumentSnapshot
     q = query(collection(db, CARDS_COLLECTION), orderBy('cardNumber'), startAfter(lastDoc), limit(pageSize));
   }
   const snapshot = await getDocs(q);
-  const cards = snapshot.docs.map((d) => ({ id: d.id, ...d.data() }) as Card);
+  const cards = snapshot.docs.map((d) => normalizeCard(d.id, d.data()));
   const last = snapshot.docs[snapshot.docs.length - 1] || null;
   return { cards, lastDoc: last };
+}
+
+export async function getAllCards(): Promise<Card[]> {
+  const snapshot = await getDocs(query(collection(db, CARDS_COLLECTION), orderBy('cardNumber')));
+  return snapshot.docs.map((d) => normalizeCard(d.id, d.data()));
 }
 
 export async function getCardById(id: string): Promise<Card | null> {
   const docSnap = await getDoc(doc(db, CARDS_COLLECTION, id));
   if (!docSnap.exists()) return null;
-  return { id: docSnap.id, ...docSnap.data() } as Card;
+  return normalizeCard(docSnap.id, docSnap.data());
 }
 
 export async function searchCards(searchTerm: string): Promise<Card[]> {
   const snapshot = await getDocs(collection(db, CARDS_COLLECTION));
   const term = searchTerm.toLowerCase();
   return snapshot.docs
-    .map((d) => ({ id: d.id, ...d.data() }) as Card)
+    .map((d) => normalizeCard(d.id, d.data()))
     .filter((card) =>
       card.nameEN.toLowerCase().includes(term) ||
       card.nameJP.includes(term) ||
-      card.nameRomaji.toLowerCase().includes(term) ||
+      (card.nameRomaji && card.nameRomaji.toLowerCase().includes(term)) ||
       card.cardNumber.toLowerCase().includes(term)
     );
 }
@@ -55,7 +69,7 @@ export async function searchCards(searchTerm: string): Promise<Card[]> {
 export async function getCardsByNation(nation: string): Promise<Card[]> {
   const q = query(collection(db, CARDS_COLLECTION), where('nation', '==', nation));
   const snapshot = await getDocs(q);
-  return snapshot.docs.map((d) => ({ id: d.id, ...d.data() }) as Card);
+  return snapshot.docs.map((d) => normalizeCard(d.id, d.data()));
 }
 
 export async function addCard(cardData: Omit<Card, 'id' | 'searchTokens' | 'updatedAt'>): Promise<string> {

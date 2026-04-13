@@ -3,6 +3,15 @@ import {
 } from 'firebase/firestore';
 import { db } from '../config/firebase';
 import { CollectionItem } from '../types/collection';
+import { normalizeTimestamp } from '../utils/formatters';
+
+function normalizeCollectionItem(cardId: string, data: Record<string, unknown>): CollectionItem {
+  return {
+    ...data,
+    cardId,
+    updatedAt: normalizeTimestamp(data.updatedAt),
+  } as CollectionItem;
+}
 
 function collectionRef(userId: string) {
   return collection(db, 'collections', userId, 'items');
@@ -10,13 +19,13 @@ function collectionRef(userId: string) {
 
 export async function getCollection(userId: string): Promise<CollectionItem[]> {
   const snapshot = await getDocs(collectionRef(userId));
-  return snapshot.docs.map((d) => ({ cardId: d.id, ...d.data() }) as CollectionItem);
+  return snapshot.docs.map((d) => normalizeCollectionItem(d.id, d.data()));
 }
 
 export async function getCollectionItem(userId: string, cardId: string): Promise<CollectionItem | null> {
   const docSnap = await getDoc(doc(db, 'collections', userId, 'items', cardId));
   if (!docSnap.exists()) return null;
-  return { cardId: docSnap.id, ...docSnap.data() } as CollectionItem;
+  return normalizeCollectionItem(docSnap.id, docSnap.data());
 }
 
 export async function setCollectionItem(userId: string, item: CollectionItem): Promise<void> {
@@ -49,7 +58,7 @@ export async function getUsersWithForTrade(): Promise<{ userId: string; items: C
   for (const userDoc of usersSnap.docs) {
     const itemsSnap = await getDocs(collection(db, 'collections', userDoc.id, 'items'));
     const items = itemsSnap.docs
-      .map((d) => ({ cardId: d.id, ...d.data() }) as CollectionItem)
+      .map((d) => normalizeCollectionItem(d.id, d.data()))
       .filter((item) => item.forTrade > 0);
     if (items.length > 0) {
       results.push({ userId: userDoc.id, items });

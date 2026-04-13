@@ -4,6 +4,17 @@ import {
 import { ref, set } from 'firebase/database';
 import { db, rtdb } from '../config/firebase';
 import { Trade, TradeStatus, TradeCard } from '../types/trade';
+import { normalizeTimestamp } from '../utils/formatters';
+
+function normalizeTrade(id: string, data: Record<string, unknown>): Trade {
+  return {
+    ...data,
+    id,
+    createdAt: normalizeTimestamp(data.createdAt),
+    updatedAt: normalizeTimestamp(data.updatedAt),
+    completedAt: data.completedAt ? normalizeTimestamp(data.completedAt) : null,
+  } as Trade;
+}
 
 export async function createTrade(
   initiatorId: string,
@@ -13,15 +24,6 @@ export async function createTrade(
 ): Promise<string> {
   // Create chat room in Realtime Database
   const chatId = `trade_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
-  const chatRef = ref(rtdb, `chats/${chatId}`);
-  await set(chatRef, {
-    participants: { [initiatorId]: true, [receiverId]: true },
-    metadata: {
-      createdAt: Date.now(),
-      lastMessage: '',
-      lastMessageAt: Date.now(),
-    },
-  });
 
   // Create trade document in Firestore
   const tradeRef = await addDoc(collection(db, 'trades'), {
@@ -40,13 +42,25 @@ export async function createTrade(
     updatedAt: serverTimestamp(),
   });
 
+  // Create chat room with tradeId reference
+  const chatRef = ref(rtdb, `chats/${chatId}`);
+  await set(chatRef, {
+    participants: { [initiatorId]: true, [receiverId]: true },
+    metadata: {
+      tradeId: tradeRef.id,
+      createdAt: Date.now(),
+      lastMessage: '',
+      lastMessageAt: Date.now(),
+    },
+  });
+
   return tradeRef.id;
 }
 
 export async function getTrade(tradeId: string): Promise<Trade | null> {
   const docSnap = await getDoc(doc(db, 'trades', tradeId));
   if (!docSnap.exists()) return null;
-  return { id: docSnap.id, ...docSnap.data() } as Trade;
+  return normalizeTrade(docSnap.id, docSnap.data());
 }
 
 export async function getUserTrades(userId: string): Promise<Trade[]> {
@@ -56,11 +70,19 @@ export async function getUserTrades(userId: string): Promise<Trade[]> {
   const [snap1, snap2] = await Promise.all([getDocs(q1), getDocs(q2)]);
 
   const trades = [
-    ...snap1.docs.map((d) => ({ id: d.id, ...d.data() }) as Trade),
-    ...snap2.docs.map((d) => ({ id: d.id, ...d.data() }) as Trade),
+    ...snap1.docs.map((d) => normalizeTrade(d.id, d.data())),
+    ...snap2.docs.map((d) => normalizeTrade(d.id, d.data())),
   ];
 
-  return trades.sort((a, b) => (b.createdAt || '').localeCompare(a.createdAt || ''));
+  // Deduplicate (a trade could appear in both queries if initiator === receiver in theory)
+  const seen = new Set<string>();
+  const unique = trades.filter((t) => {
+    if (seen.has(t.id)) return false;
+    seen.add(t.id);
+    return true;
+  });
+
+  return unique.sort((a, b) => (b.createdAt || '').localeCompare(a.createdAt || ''));
 }
 
 export async function updateTradeStatus(tradeId: string, status: TradeStatus): Promise<void> {
@@ -95,5 +117,5 @@ export async function updateTradeCards(
 export async function getReportedTrades(): Promise<Trade[]> {
   const q = query(collection(db, 'trades'), where('status', '==', 'disputed'));
   const snapshot = await getDocs(q);
-  return snapshot.docs.map((d) => ({ id: d.id, ...d.data() }) as Trade);
+  return snapshot.docs.map((d) => normalizeTrade(d.id, d.data()));
 }

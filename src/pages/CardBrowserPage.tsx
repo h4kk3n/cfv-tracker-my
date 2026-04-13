@@ -7,7 +7,7 @@ import Spinner from '../components/ui/Spinner';
 import Pagination from '../components/ui/Pagination';
 import EmptyState from '../components/ui/EmptyState';
 import { Card, CardFilters, NATIONS, GRADES, TRIGGERS, RARITIES } from '../types/card';
-import { getCards } from '../services/cardService';
+import { getAllCards } from '../services/cardService';
 import { filterCards, sortCards } from '../utils/cardFilters';
 import { CARDS_PER_PAGE } from '../utils/constants';
 
@@ -37,7 +37,7 @@ export default function CardBrowserPage() {
   const loadCards = async () => {
     setLoading(true);
     try {
-      const { cards: data } = await getCards(1000);
+      const data = await getAllCards();
       setCards(data);
     } catch {
       setCards([]);

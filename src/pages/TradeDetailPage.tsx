@@ -32,8 +32,8 @@ export default function TradeDetailPage() {
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    if (tradeId) loadTrade();
-  }, [tradeId]);
+    if (tradeId && user) loadTrade();
+  }, [tradeId, user]);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });

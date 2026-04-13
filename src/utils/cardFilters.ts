@@ -28,7 +28,7 @@ export function sortCards(cards: Card[], sortBy: string): Card[] {
     case 'name': return sorted.sort((a, b) => a.nameEN.localeCompare(b.nameEN));
     case 'grade': return sorted.sort((a, b) => a.grade - b.grade);
     case 'power': return sorted.sort((a, b) => a.power - b.power);
-    case 'newest': return sorted.sort((a, b) => b.updatedAt.localeCompare(a.updatedAt));
+    case 'newest': return sorted.sort((a, b) => (b.updatedAt || '').localeCompare(a.updatedAt || ''));
     default: return sorted;
   }
 }
