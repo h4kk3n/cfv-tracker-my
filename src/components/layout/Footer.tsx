@@ -6,7 +6,7 @@ export default function Footer() {
       <div className="max-w-7xl mx-auto px-4 py-6">
         <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
           <p className="text-sm text-gray-500 dark:text-gray-400">
-            {new Date().getFullYear()} {APP_NAME}. Built for the Malaysian CFV community.
+            {new Date().getFullYear()} {APP_NAME}. Built for the Malaysian CardFightVanguard! community. Made by Aslam.
           </p>
           <p className="text-xs text-gray-400 dark:text-gray-500">
             Cardfight!! Vanguard is a trademark of Bushiroad Inc.
