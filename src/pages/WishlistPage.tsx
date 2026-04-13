@@ -18,6 +18,12 @@ interface WishlistCardData {
   card: Card | null;
 }
 
+const PRIORITY_BADGE_VARIANTS = {
+  high: 'danger',
+  medium: 'warning',
+  low: 'default',
+} as const;
+
 export default function WishlistPage() {
   const { user } = useAuth();
   const { addToast } = useNotification();
@@ -50,11 +56,9 @@ export default function WishlistPage() {
     if (!user) return;
     await updateWishlistPriority(user.uid, cardId, priority);
     setItems(items.map((i) =>
-      i.item.cardId === cardId ? { ...i, item: { ...i.item, priority: priority as any } } : i
+      i.item.cardId === cardId ? { ...i, item: { ...i.item, priority: priority as WishlistItem['priority'] } } : i
     ));
   };
-
-  const priorityColors = { high: 'danger', medium: 'warning', low: 'default' } as const;
 
   if (loading) return <div className="py-20"><Spinner size="lg" /></div>;
 
@@ -63,7 +67,7 @@ export default function WishlistPage() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold">My Wishlist</h1>
-          <p className="text-sm text-gray-500">{items.length} cards wanted</p>
+          <p className="text-sm text-gray-500">{items.length} card{items.length !== 1 ? 's' : ''} wanted</p>
         </div>
         <Link to="/cards"><Button size="sm"><Plus size={16} className="mr-1" /> Browse Cards</Button></Link>
       </div>
@@ -78,26 +82,67 @@ export default function WishlistPage() {
       ) : (
         <div className="space-y-2">
           {items.map(({ item, card }) => (
-            <div key={item.cardId} className="card-container p-3 flex items-center gap-4">
-              <Link to={`/cards/${item.cardId}`} className="w-10 h-14 bg-gray-100 dark:bg-gray-700 rounded overflow-hidden flex-shrink-0">
-                {card?.imageURL && <img src={card.imageURL} alt={card.nameEN} className="w-full h-full object-cover" loading="lazy" />}
-              </Link>
-              <div className="flex-1 min-w-0">
-                <Link to={`/cards/${item.cardId}`} className="font-medium text-sm hover:text-primary-600 truncate block">{card?.nameEN || item.cardId}</Link>
-                <p className="text-xs text-gray-500">{card?.cardNumber} - {card?.nameJP}</p>
+            <div key={item.cardId} className="card-container p-3">
+              {/* Row: thumbnail + text + controls */}
+              <div className="flex items-center gap-3">
+                {/* Thumbnail */}
+                <Link
+                  to={`/cards/${item.cardId}`}
+                  className="w-10 h-14 bg-gray-100 dark:bg-gray-700 rounded overflow-hidden flex-shrink-0"
+                >
+                  {card?.imageURL && (
+                    <img
+                      src={card.imageURL}
+                      alt={card.nameEN}
+                      className="w-full h-full object-cover"
+                      loading="lazy"
+                    />
+                  )}
+                </Link>
+
+                {/* Card info — takes remaining space, truncates */}
+                <div className="flex-1 min-w-0">
+                  <Link
+                    to={`/cards/${item.cardId}`}
+                    className="font-medium text-sm hover:text-primary-600 truncate block"
+                  >
+                    {card?.nameEN || item.cardId}
+                  </Link>
+                  <p className="text-xs text-gray-500 truncate">
+                    {card?.cardNumber}{card?.nameJP ? ` — ${card.nameJP}` : ''}
+                  </p>
+                </div>
+
+                {/* Priority badge — visible on sm+, hidden on mobile to save space */}
+                <div className="hidden sm:block flex-shrink-0">
+                  <Badge variant={PRIORITY_BADGE_VARIANTS[item.priority]}>
+                    {item.priority}
+                  </Badge>
+                </div>
+
+                {/* Priority select */}
+                <div className="flex-shrink-0 w-[100px]">
+                  <Select
+                    value={item.priority}
+                    onChange={(e) => handlePriorityChange(item.cardId, e.target.value)}
+                    options={[
+                      { value: 'high', label: 'High' },
+                      { value: 'medium', label: 'Medium' },
+                      { value: 'low', label: 'Low' },
+                    ]}
+                    aria-label={`Priority for ${card?.nameEN || item.cardId}`}
+                  />
+                </div>
+
+                {/* Delete button */}
+                <button
+                  onClick={() => handleRemove(item.cardId)}
+                  className="flex-shrink-0 p-2 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg text-red-500 transition-colors"
+                  aria-label={`Remove ${card?.nameEN || item.cardId} from wishlist`}
+                >
+                  <Trash2 size={16} />
+                </button>
               </div>
-              <Badge variant={priorityColors[item.priority]}>{item.priority}</Badge>
-              <Select value={item.priority} onChange={(e) => handlePriorityChange(item.cardId, e.target.value)}
-                options={[
-                  { value: 'high', label: 'High' },
-                  { value: 'medium', label: 'Medium' },
-                  { value: 'low', label: 'Low' },
-                ]}
-                className="w-24"
-              />
-              <button onClick={() => handleRemove(item.cardId)} className="p-2 hover:bg-red-50 dark:hover:bg-red-900/20 rounded text-red-500">
-                <Trash2 size={16} />
-              </button>
             </div>
           ))}
         </div>
