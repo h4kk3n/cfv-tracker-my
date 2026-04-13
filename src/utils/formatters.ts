@@ -43,6 +43,16 @@ export function formatRelativeTime(timestamp: number): string {
   return formatDate(new Date(timestamp).toISOString());
 }
 
+/**
+ * Strips stray backslash-escape artifacts from display text.
+ * CFA source data contains sequences like \#, \_, \/ in card names/effects.
+ * These should render as their unescaped characters in the UI.
+ */
+export function sanitizeDisplayText(text: string): string {
+  if (!text) return '';
+  return text.replace(/\\([#*_\[\]\/\\>~`|])/g, '$1');
+}
+
 export function truncateText(text: string, maxLength: number): string {
   if (text.length <= maxLength) return text;
   return text.slice(0, maxLength) + '...';

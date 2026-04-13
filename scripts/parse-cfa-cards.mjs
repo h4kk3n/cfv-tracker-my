@@ -153,7 +153,7 @@ function parseCardFile(filePath, defaultNation) {
     // Extract CardName
     const nameMatch = block.match(/global\.CardName\[CardStat\]\s*=\s*'([^']*(?:\\'[^']*)*)'/);
     if (!nameMatch) continue;
-    const nameEN = nameMatch[1].replace(/\\'/g, "'").replace(/\x92/g, "'").trim();
+    const nameEN = nameMatch[1].replace(/\\'/g, "'").replace(/\x92/g, "'").replace(/\\([#*_\[\]\/\\>~`|])/g, '$1').trim();
     if (!nameEN) continue;
 
     // Extract CardText (contains nation/race on first line, then effect)
@@ -163,7 +163,7 @@ function parseCardFile(filePath, defaultNation) {
     let effectEN = '';
 
     if (textMatch) {
-      const fullText = textMatch[1].replace(/\x92/g, "'").replace(/\\'/g, "'");
+      const fullText = textMatch[1].replace(/\x92/g, "'").replace(/\\'/g, "'").replace(/\\([#*_\[\]\/\\>~`|])/g, '$1');
       const lines = fullText.split('\n');
 
       // First line is "Nation/Race" or "Nation/Race1/Race2"

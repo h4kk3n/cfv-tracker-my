@@ -5,7 +5,7 @@ import {
 } from 'firebase/firestore';
 import { db } from '../config/firebase';
 import { Card } from '../types/card';
-import { normalizeTimestamp } from '../utils/formatters';
+import { normalizeTimestamp, sanitizeDisplayText } from '../utils/formatters';
 
 const CARDS_COLLECTION = 'cards';
 
@@ -13,6 +13,10 @@ function normalizeCard(id: string, data: Record<string, unknown>): Card {
   return {
     ...data,
     id,
+    nameEN: sanitizeDisplayText(data.nameEN as string || ''),
+    nameRomaji: sanitizeDisplayText(data.nameRomaji as string || ''),
+    effectEN: sanitizeDisplayText(data.effectEN as string || ''),
+    flavorTextEN: sanitizeDisplayText(data.flavorTextEN as string || ''),
     updatedAt: normalizeTimestamp(data.updatedAt),
   } as Card;
 }
