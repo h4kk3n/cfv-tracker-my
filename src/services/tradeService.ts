@@ -1,10 +1,10 @@
 import {
   collection, doc, getDoc, getDocs, addDoc, updateDoc, query, where, orderBy, serverTimestamp,
 } from 'firebase/firestore';
-import { ref, set } from 'firebase/database';
-import { db, rtdb } from '../config/firebase';
+import { db } from '../config/firebase';
 import { Trade, TradeStatus, TradeCard } from '../types/trade';
 import { normalizeTimestamp } from '../utils/formatters';
+import { createTradeChat } from './chatService';
 
 function normalizeTrade(id: string, data: Record<string, unknown>): Trade {
   return {
@@ -22,17 +22,14 @@ export async function createTrade(
   initiatorCards: TradeCard[],
   receiverCards: TradeCard[]
 ): Promise<string> {
-  // Create chat room in Realtime Database
-  const chatId = `trade_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
-
-  // Create trade document in Firestore
+  // Create trade document in Firestore first
   const tradeRef = await addDoc(collection(db, 'trades'), {
     initiatorId,
     receiverId,
     status: 'pending' as TradeStatus,
     initiatorCards,
     receiverCards,
-    chatId,
+    chatId: '', // will be set after chat creation
     meetupLocation: null,
     meetupDate: null,
     reportedBy: null,
@@ -42,17 +39,11 @@ export async function createTrade(
     updatedAt: serverTimestamp(),
   });
 
-  // Create chat room with tradeId reference
-  const chatRef = ref(rtdb, `chats/${chatId}`);
-  await set(chatRef, {
-    participants: { [initiatorId]: true, [receiverId]: true },
-    metadata: {
-      tradeId: tradeRef.id,
-      createdAt: Date.now(),
-      lastMessage: '',
-      lastMessageAt: Date.now(),
-    },
-  });
+  // Create chat room in RTDB with tradeId + userChats index
+  const chatId = await createTradeChat(initiatorId, receiverId, tradeRef.id);
+
+  // Update trade with chatId
+  await updateDoc(doc(db, 'trades', tradeRef.id), { chatId });
 
   return tradeRef.id;
 }

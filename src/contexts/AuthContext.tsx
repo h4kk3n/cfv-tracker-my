@@ -4,6 +4,7 @@ import { doc, getDoc, setDoc, serverTimestamp } from 'firebase/firestore';
 import { auth, db } from '../config/firebase';
 import { UserProfile } from '../types/user';
 import { normalizeTimestamp } from '../utils/formatters';
+import { setupPresence } from '../services/chatService';
 
 interface AuthContextType {
   user: User | null;
@@ -55,6 +56,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     });
     return unsubscribe;
   }, []);
+
+  // Presence tracking — set online/offline status in RTDB
+  useEffect(() => {
+    if (!user) return;
+    const cleanupPresence = setupPresence(user.uid);
+    return cleanupPresence;
+  }, [user]);
 
   return (
     <AuthContext.Provider value={{ user, userProfile, loading, refreshProfile }}>

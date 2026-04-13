@@ -3,7 +3,7 @@ import { useParams, Link } from 'react-router-dom';
 import { ArrowLeft, Send, Check, X as XIcon } from 'lucide-react';
 import Button from '../components/ui/Button';
 import Badge from '../components/ui/Badge';
-
+import ChatMessageBubble from '../components/chat/ChatMessageBubble';
 import Spinner from '../components/ui/Spinner';
 import { Trade } from '../types/trade';
 import { ChatMessage } from '../types/chat';
@@ -15,7 +15,6 @@ import { getUserProfile } from '../services/userService';
 import { useAuth } from '../contexts/AuthContext';
 import { useNotification } from '../contexts/NotificationContext';
 import { TRADE_STATUS_COLORS, TRADE_STATUS_LABELS } from '../utils/constants';
-import { formatRelativeTime } from '../utils/formatters';
 import { UserProfile } from '../types/user';
 
 export default function TradeDetailPage() {
@@ -157,18 +156,11 @@ export default function TradeDetailPage() {
         <div className="h-80 overflow-y-auto p-4 space-y-3">
           {messages.length === 0 && <p className="text-center text-sm text-gray-400">No messages yet. Start the conversation!</p>}
           {messages.map((msg) => (
-            <div key={msg.id} className={`flex ${msg.senderId === user?.uid ? 'justify-end' : 'justify-start'}`}>
-              <div className={`max-w-[70%] px-3 py-2 rounded-xl text-sm ${
-                msg.senderId === user?.uid
-                  ? 'bg-primary-600 text-white rounded-br-none'
-                  : 'bg-gray-100 dark:bg-gray-700 rounded-bl-none'
-              }`}>
-                <p>{msg.text}</p>
-                <p className={`text-xs mt-1 ${msg.senderId === user?.uid ? 'text-primary-200' : 'text-gray-400'}`}>
-                  {formatRelativeTime(msg.timestamp)}
-                </p>
-              </div>
-            </div>
+            <ChatMessageBubble
+              key={msg.id}
+              message={msg}
+              isOwn={msg.senderId === user?.uid}
+            />
           ))}
           {otherTyping && (
             <div className="flex justify-start">

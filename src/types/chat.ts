@@ -1,9 +1,15 @@
+export type MessageType = 'text' | 'card';
+
 export interface ChatMessage {
   id: string;
   senderId: string;
   text: string;
   timestamp: number;
   read: boolean;
+  type?: MessageType;
+  cardId?: string;
+  cardName?: string;
+  cardImage?: string;
 }
 
 export interface ChatRoom {
@@ -12,6 +18,12 @@ export interface ChatRoom {
   tradeId: string;
   lastMessage: string;
   lastMessageAt: number;
+  type?: 'direct' | 'trade';
+}
+
+export interface UserPresence {
+  online: boolean;
+  lastSeen: number;
 }
 
 export interface Notification {

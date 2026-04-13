@@ -2,24 +2,32 @@
   "rules": {
     "chats": {
       "$chatId": {
-        "participants": {
-          ".read": "auth != null && data.child(auth.uid).exists()",
-          ".write": false
-        },
+        ".read": "auth != null && root.child('chats/' + $chatId + '/participants/' + auth.uid).exists()",
+        ".write": "auth != null && (!data.exists() || root.child('chats/' + $chatId + '/participants/' + auth.uid).exists())",
         "messages": {
-          ".read": "auth != null && root.child('chats/' + $chatId + '/participants/' + auth.uid).exists()",
-          ".write": "auth != null && root.child('chats/' + $chatId + '/participants/' + auth.uid).exists() && newData.child('senderId').val() === auth.uid"
-        },
-        "typing": {
-          ".read": "auth != null && root.child('chats/' + $chatId + '/participants/' + auth.uid).exists()",
-          "$userId": {
-            ".write": "auth != null && $userId === auth.uid"
+          "$msgId": {
+            ".validate": "newData.child('senderId').val() === auth.uid"
           }
         },
-        "metadata": {
-          ".read": "auth != null && root.child('chats/' + $chatId + '/participants/' + auth.uid).exists()",
-          ".write": "auth != null && root.child('chats/' + $chatId + '/participants/' + auth.uid).exists()"
+        "typing": {
+          "$userId": {
+            ".validate": "$userId === auth.uid"
+          }
         }
+      }
+    },
+    "userChats": {
+      "$userId": {
+        ".read": "auth != null && auth.uid === $userId",
+        "$chatId": {
+          ".write": "auth != null"
+        }
+      }
+    },
+    "presence": {
+      "$userId": {
+        ".read": "auth != null",
+        ".write": "auth != null && auth.uid === $userId"
       }
     }
   }
